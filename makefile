@@ -1,4 +1,4 @@
-ALL=test
+ALL=Cavity_glsc
 .POHONY:all, clean
 
 LDLIBS+=-lglsc -lX11
@@ -8,4 +8,4 @@ all:${ALL}
 clean:
 	rm -rf ${ALL}
 
-test:NS.h NS_Vector.cpp NS_Matrix.cpp NS_Function.cpp NS_System.cpp
+Cavity_glsc:NS.h NS_Vector.cpp NS_Matrix.cpp NS_System.cpp
