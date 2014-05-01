@@ -123,6 +123,65 @@ namespace NS
 		double y(int j);
 	};
 
+	//Staggered Cell
+	//    +------v_i,j+2-------+------v_i+1,j+2------+
+	//    |                    |                     |
+	//    |                    |                     |
+	//  u_i,j+1  p_i,j+1  u_i+1,j+1   p_i+1,j+1 u\i+2,j+1
+	//    |                    |                     |
+	//    |                    |                     |
+	//    +-------v_i,j+1------+------v_i+1,j+1------+
+	//    |                    |                     |
+	//    |                    |                     |
+	//  u_i,j     p_i,j   u_i+1,j     p_i+1,j   u_i+2,j
+	//    |                    |                     |
+	//    |                    |                     |
+	//    +-------v_i,j--------+------v_i+1,j--------+
+
+	class NS_Staggered
+	{
+	public:
+		const unsigned int Nx, Ny;//Cell Number
+		const double Re, xmin, xmax, ymin, ymax, dx, dy;
+		unsigned int i, j;
+		class Index
+		{
+		public:
+			Index(unsigned int &i, unsigned int &j, unsigned int Nx, unsigned int Ny);
+
+			operator unsigned int();
+		private:
+			unsigned int &i, &j;
+			const unsigned int Nx, Ny;
+		}un, pn;
+
+		NS_Vector u;
+		ZNAC::LA::Vector<double> p;
+
+		const class Coor
+		{
+		public:
+			Coor(double dx, double offset, unsigned int &i);
+			operator double() const;
+		private:
+			double dx, offset;
+			unsigned int &i;
+		}ux, uy, vx, vy, px, py;
+
+		class 
+
+		//rx -> origin to xend
+		//ry -= origin to yend
+		NS_Staggered(double Re, unsigned int Nx, unsigned int Ny, 
+				double (*u)(double x, double y) = [](double x, double y)->double{return 0;}, 
+				double (*v)(double x, double y) = [](double x, double y)->double{return 0;},
+			       	double (*p)(double x, double y) = [](double x, double y)->double{return 0;},
+			       	double rx = 1, double ry = 1);
+
+	private:
+		const double xoffset, yoffset;
+	};
+
 	struct NS_Option
 	{
 		double Re;//Reynolds
