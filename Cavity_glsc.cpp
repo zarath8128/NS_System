@@ -62,16 +62,15 @@ int main(int argc, char *argv[])
 //	NS_Option opt(argc, argv);
 	double Re = 400;//Reynolds
 	double a = 1;//parabola parameter
-	unsigned int N = 64;//x-y divide num
+	unsigned int N = 512;//x-y divide num
 	float width = 1;//length from origin to bound
 	double arrow_len = 2*width/(16*a);
 	bool Negative = true;
 	int pn_time = 1;
-	bool All = false;
-	bool Advection = !All && true;
-	bool Diffusion = !All && true;
-	bool Force = !All && false;
-	bool Pressure = !All && true;
+	bool Advection = true;
+	bool Diffusion = true;
+	bool Force = false;
+	bool Pressure = true;
 	bool Auto = true;
 	double dt = (2*width/N)*(2*width/N)*0.25*0.8*Re;
 	double t = 0;
@@ -80,7 +79,7 @@ int main(int argc, char *argv[])
 	const float bound_y[] = {width, -width, -width, width};
 	char dammy_name[] = "";
 	char info[256];
-	int cut = 100;
+	int cut = 1;
 	int count = -1;
 	int pmod = N / 32;
 	int vmod = N / 16;
@@ -126,11 +125,11 @@ int main(int argc, char *argv[])
 	g_text_color(G_BLACK);
 	g_text_font(G_FONT_TIMES_24);
 
-	g_capture_set("");
+	g_capture_set(dammy_name);
 
 	while(1)
 	{
-		std::cerr << count << "\n";
+		//std::cerr << count << "\n";
 		/*for(unsigned int i = 0; i < N; ++i)
 			if(nssys.x(i) != -nssys.x(nssys.Nx - 1 - i))
 			{
@@ -190,22 +189,9 @@ int main(int argc, char *argv[])
 			g_capture();
 		}
 
-		if(pn_time == count)
-			printval(N, N, nssys.u , "p-Gradient", Negative);
-		
-		if(All)
-		{
-			NS_Vector diff(nssys.Nx, nssys.Ny), adv(nssys.Nx, nssys.Ny);
-
-			advection(nssys.u, adv);
-			diffusion(nssys.u, diff);
-		}
-
 		if(Advection)
 		{
 			advection(nssys.u, vtmp1);
-			if(pn_time == count)
-				printval(N, N, vtmp1, "Advection", Negative);
 			for(unsigned int j = 1; j < N - 1; ++j)
 				for(unsigned int i = 1; i < N - 1; ++i)
 				{	
@@ -217,8 +203,6 @@ int main(int argc, char *argv[])
 		if(Diffusion)
 		{
 			diffusion(nssys.u, vtmp1);
-			if(pn_time == count)
-				printval(N, N, vtmp1, "Diffusion", Negative);
 			for(unsigned int j = 1; j < N - 1; ++j)
 				for(unsigned int i = 1; i < N - 1; ++i)
 				{
@@ -240,8 +224,6 @@ int main(int argc, char *argv[])
 		if(Pressure)
 		{
 			NS_Gradient(nssys.p, vtmp1, nssys.dx);
-			if(pn_time == count)
-				printval(N, N, vtmp1, "p-Gradient", Negative);
 			for(unsigned int j = 1; j < N - 1; ++j)
 				for(unsigned int i = 1; i < N - 1; ++i)
 				{
@@ -252,8 +234,6 @@ int main(int argc, char *argv[])
 			CG<double>(N*N, 1e-15, supNorm<double>())(diffusion_s, phi, stmp);
 
 			NS_Gradient(phi, vtmp1, nssys.dx);
-			if(pn_time == count)
-				printval(N, N, vtmp1, "phi-Gradient", Negative);
 			for(unsigned int j = 1; j < N - 1; ++j)
 				for(unsigned int i = 1; i < N - 1; ++i)
 				{
@@ -277,9 +257,6 @@ int main(int argc, char *argv[])
 		}
 
 		t += dt;
-
-		if(pn_time == count)
-			break;
 
 	}
 

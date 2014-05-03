@@ -2,7 +2,7 @@ ALL=Cavity_glsc test
 .POHONY:all, clean
 
 LDLIBS+=-lglsc -lX11
-CXXFLAGS=-std=c++0x
+CXXFLAGS=-std=c++0x -O2
 
 all:${ALL}
 clean:
