@@ -3,6 +3,7 @@
 
 #include <ZNAC/LA/Vector.h>
 #include <ZNAC/LA/Matrix.h>
+#include <cassert>
 
 namespace NS
 {
@@ -140,62 +141,107 @@ namespace NS
 	//    +-------v_i,j--------+------v_i+1,j--------+
 	//
 
+	struct NS_Index
+	{
+		const unsigned int Nx, Ny, margin;
+		int &xi, &yi;
+
+		NS_Index(int &xi, int &yi, unsigned int Nx, unsigned int Ny, unsigned int margin = 1):xi(xi), yi(yi), Nx(Nx), Ny(Ny), margin(margin){}
+		unsigned int operator()(int dxi, int dyi) const {return (yi + dyi + margin)*(Nx + 2*margin) + xi + dxi + margin;}
+		operator unsigned int()const{return (yi + margin)*(Nx + 2*margin) + xi + margin;}
+	};
+
+	class Diffusion
+		:public ZNAC::LA::IMatrix<double>
+	{
+	public:
+		Diffusion(double Dx, double Dy, unsigned int Nx, unsigned int Ny, unsigned int margin = 1);
+
+		void operator()(const ZNAC::LA::IVector<double> &dom, ZNAC::LA::IVector<double> &cod)const;
+		double &operator()(unsigned int i, unsigned int j);
+		const double &operator()(unsigned int i, unsigned int j)const;
+
+	private:
+		mutable int xi, yi;
+		NS_Index n;
+		const double Dx, Dy;
+	};
+
+	class NS_Grid
+		:public ZNAC::LA::IVector<double>
+	{
+	public:
+		const unsigned int Nx, Ny, margin;
+
+		NS_Grid(unsigned int Nx, unsigned int Ny, unsigned int margin = 1);
+		~NS_Grid();
+
+		double &operator()(int xi, int yi);
+		double &operator[](unsigned int i);
+		const double &operator[](unsigned int i) const;
+		unsigned int N()const;
+		operator double*() const{return buf;}
+
+	private:
+		double *buf;
+	};
+
+	class StaggeredFunction
+	{
+	public:
+		StaggeredFunction(double dx, double dy):dx_inv(1/dx), dy_inv(1/dy){}
+	protected:
+		const double dx_inv, dy_inv;
+	};
+
+	class Advection
+		:public StaggeredFunction
+	{
+	public:
+		Advection(double dx, double dy):StaggeredFunction(dx, dy){}
+		void operator()(const NS_Grid &u, const NS_Grid &v, NS_Grid &du, NS_Grid &dv);
+	};
+
+	class Gradient
+		:public StaggeredFunction
+	{
+	public:
+		Gradient(double dx, double dy):StaggeredFunction(dx, dy){}
+		void operator()(const NS_Grid &p, NS_Grid &dpu, NS_Grid &dpv);
+	};
+
+	class Divergence
+		:public StaggeredFunction
+	{
+	public:
+		Divergence(double dx, double dy):StaggeredFunction(dx, dy){}
+		void operator()(const NS_Grid &u, const NS_Grid &v, NS_Grid &duv);
+	};
+
+	class NS_Coor
+	{
+	public:
+		const double delta, origin;
+		int i;
+
+		NS_Coor(double delta, double origin);
+		operator double();
+		double operator()(int i);
+	};
+
 	class NS_Staggered
 	{
 	public:
-		const unsigned int Nx, Ny, margin;//Cell Number
-		const double Re, left, right, bottom, top, dx, dy, redx2_inv, redy2_inv, dx_inv, dy_inv;
-		NS_Vector u;
-		ZNAC::LA::Vector<double> p;
-		const double xoffset, yoffset;
-		int i, j;
-
-		class Index
-		{
-		public:
-			Index(int &i, int &j, unsigned int Nx, unsigned int Ny, unsigned int margin);
-			unsigned int operator()(int i, int j);
-			operator unsigned int();
-		private:
-			int &i, &j;
-			const unsigned int Nx, Ny, margin;
-		}un, vn, pn;
-
-		const class Coor
-		{
-		public:
-			Coor(double dx, double offset, int &i);
-			operator double() const;
-		private:
-			double dx, offset;
-			int &i;
-		}ux, uy, vx, vy, px, py;
-
-		//Nx, Ny -> cell divide
+		const double Re, dx, dy;
+		NS_Grid u, v, p; 
+		NS_Coor ux, uy, vx, vy, px, py;
+		
 		NS_Staggered(double Re, unsigned int Nx, unsigned int Ny, 
-				double (*u)(double x, double y, unsigned int i, unsigned int j) = [](double x, double y, unsigned int i, unsigned int j)->double{return 0;}, 
-				double (*v)(double x, double y, unsigned int i, unsigned int j) = [](double x, double y, unsigned int i, unsigned int j)->double{return 0;}, 
-				double (*p)(double x, double y, unsigned int i, unsigned int j) = [](double x, double y, unsigned int i, unsigned int j)->double{return 0;}, 
-			       	double left = -1, double right = 1, double bottom = -1, double top = 1, unsigned int margin = 1);
+				double (*U)(double x, double y, int i, int j) = [](double x, double y, int i, int j)->double{return 0;}, 
+				double (*V)(double x, double y, int i, int j) = [](double x, double y, int i, int j)->double{return 0;}, 
+				double (*P)(double x, double y, int i, int j) = [](double x, double y, int i, int j)->double{return 0;}, 
+				double left = -1, double right = 1, double bottom = -1, double top = 1, unsigned int margin = 1);
 
-		//differentials
-		void Diffusion_u(NS_Vector &du);
-		void Gradient(const ZNAC::LA::IVector<double> &p, NS_Vector &dp);
-		void Advection(NS_Vector &du);
-		void Divergence(ZNAC::LA::IVector<double> &du);
-		class Diffusion
-			:public ZNAC::LA::IMatrix<double>
-		{
-		public:
-			Diffusion(unsigned int Nx, unsigned int Ny, unsigned int margin, double dx, double dy);
-			void operator()(const ZNAC::LA::IVector<double> &dom, ZNAC::LA::IVector<double> &cod) const;
-			double &operator()(unsigned int i, unsigned int j);
-			const double &operator()(unsigned int i, unsigned int j) const;
-
-		private:
-			const unsigned int Nx, Ny, margin;
-			const double dx2_inv, dy2_inv;
-		}diffusion_p;
 	};
 
 	struct NS_Option
