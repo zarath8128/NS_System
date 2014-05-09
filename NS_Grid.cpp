@@ -93,11 +93,14 @@ void Divergence::operator()(const NS_Grid &u, const NS_Grid &v, NS_Grid &p)
 
 NS_Grid::NS_Grid(unsigned int Nx, unsigned int Ny, unsigned int margin)
 	:Nx(Nx), Ny(Ny), margin(margin), buf(new double[(Nx + 2*margin)*(Ny + 2*margin)])
-{}
+{
+	for(unsigned int i = 0; i < N(); ++i)
+		buf[i] = 0;
+}
 
 NS_Grid::~NS_Grid(){delete [] buf;}
 
-double &NS_Grid::operator()(int xi, int yi){return buf[(yi + margin)*(Nx + 2*margin) + xi + margin];}
+double &NS_Grid::operator()(int xi, int yi){unsigned int n = (yi + margin)*(Nx + 2*margin) + xi + margin; assert(n < N()); return buf[n];}
 double &NS_Grid::operator[](unsigned int i){assert(i < N()); return buf[i];}
 const double &NS_Grid::operator[](unsigned int i) const {assert(i < N()); return buf[i];}
 unsigned int NS_Grid::N() const {return (Nx + 2*margin)*(Ny + 2*margin);}

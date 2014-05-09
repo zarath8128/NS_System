@@ -8,7 +8,7 @@ NS_Staggered::NS_Staggered(double Re, unsigned int Nx, unsigned int Ny,
 		double left, double right, double bottom, double top, unsigned int margin)
 	:Re(Re), dx((right - left)/Nx), dy((top - bottom)/Ny), 
 	u(Nx + 1, Ny, margin), v(Nx, Ny + 1, margin), p(Nx, Ny, margin),
-	ux(dx, left), uy(dy, bottom + dy*0.5), vx(dx, left + dx*0.5), vy(dy, bottom), px(dx, left + 0.5*dx), py(dy, bottom+ 0.5*dy)
+	ux(dx, left), uy(dy, bottom + dy*0.5), vx(dx, left + dx*0.5), vy(dy, bottom), px(dx, left + 0.5*dx), py(dy, bottom + 0.5*dy)
 {
 	for(uy.i = -(int)margin; uy.i < (int)(u.Ny + margin); ++uy.i)
 		for(ux.i = -(int)margin; ux.i < (int)(u.Nx + margin); ++ux.i)
